@@ -1,0 +1,22 @@
+Instruction OpCodes:
+HALT: 0
+READC: 1
+READB: 2
+READH: 3
+READW: 4
+WRITEC: 5
+WRITEB: 6
+WRITEH: 7
+WRITEW: 8
+PUSH: 9
+POP: 10
+MOV: 11
+ADD: 12
+SUB: 13
+MUL: 14
+DIV: 15
+
+Instruction Operands:
+REG: 1
+IMMEDIATE DATA: 2
+ADDRESS: 4
