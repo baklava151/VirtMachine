@@ -5,8 +5,11 @@ import std.conv;
 import core.checkedint;
 
 enum OPERANDS { REG = 1, IDATA = 2, ADDR = 4 };
-enum INS { HALT, READC, READB, READH, READW, WRITEC, WRITEB, WRITEH, WRITEW, PUSH, POP, MOV, ADD, SUB, MUL, DIV };
-		 //0	 1		2	   3	  4		 5		 6		 7		 8		 9	   10	11	 12	  13   14   15
+// Come up with shorter names for some of these
+enum INS { HALT, READC, READB, READH, READW, WRITEC, WRITEB, WRITEH, WRITEW,
+		 //0	 1		2	   3	  4		 5		 6		 7		 8
+		   PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, UREADW, UWRITEW };
+		 //9	 10	  11   12	13   14   15   16    17    18    19	   20	   21
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
 enum EXC { DIV_BY_ZERO };
@@ -236,6 +239,74 @@ class VM
 		}
 	}
 
+	/**
+	 * Performs unsigned addition on op1 and *op2
+	 * Can set overflow or zero flag
+	 * Params:
+	 *		op1 is the first value
+	 *		*op2 is the second value and where the result gets stored
+	 **/
+	private void uadd(uint op1, uint *op2)
+	{
+		debug(uadd) { writeln("Unsigned add"); }
+		*op2 = addu(op1, *op2, flags.overflow);
+		// Set negative flag to false?
+		flags.zero = *op2 == 0;
+	}
+
+	/**
+	 * Does unsigned subtraction of op1 from *op2
+	 * Can set overflow or zero flag
+	 * Params:
+	 *		op1 is the value to subtract
+	 *		*op2 is the value to be subtracted from and where the result gets stored
+	 **/
+	private void usub(uint op1, uint *op2)
+	{
+		debug(usub) { writeln("Unsigned subtraction"); }
+		*op2 = subu(*op2, op1, flags.overflow);
+		// Set negative flag to false?
+		flags.zero = *op2 == 0;
+	}
+
+	/**
+	 * Performs unsigned multiplication of op1 and *op2
+	 * Can set overflow or zero flag
+	 * Params:
+	 *		op1 is the first value
+	 *		*op2 is the second value and is where the result gets stored
+	 **/
+	private void umul(uint op1, uint *op2)
+	{
+		debug(umul) { writeln("Unsigned multiplication"); }
+		*op2 = mulu(op1, *op2, flags.overflow);
+		// Set negative flag to false?
+		flags.zero = *op2 == 0;
+	}
+
+	/**
+	 * Does an unsigned division of *op2 by op1
+	 * Can set zero flag
+	 * Params:
+	 *		op1 is the first value
+	 *		*op2 is the second value and is where the result gets stored
+	 **/
+	private void udiv(uint op1, uint *op2)
+	{
+		debug(udiv) { writeln("Unsigned division"); }
+		if(op1 == 0) 
+		{
+			stdout.flush();
+			exception_reg = EXC.DIV_BY_ZERO;
+		}
+		else
+		{
+			*op2 = *op2 / op1;
+			flags.zero = *op2 == 0;
+			// Set negative flag to false?
+		}
+	}
+
     /**
 	 * Executes the given instruction
 	 * Format in binary is op2 flags, op1 flags, then instruction itself
@@ -389,6 +460,36 @@ class VM
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
 				div(*op1, op2);
+				break;
+			case INS.UADD:
+				get_ops(op1, (ins_flags >> 8) & 0xFF);
+				get_ops(op2, ins_flags & 0xFF);
+				uadd(cast(uint) *op1, cast(uint *) op2);
+				break;
+			case INS.USUB:
+				get_ops(op1, (ins_flags >> 8) & 0xFF);
+				get_ops(op2, ins_flags & 0xFF);
+				usub(cast(uint) *op1, cast(uint *) op2);
+				break;
+			case INS.UMUL:
+				get_ops(op1, (ins_flags >> 8) & 0xFF);
+				get_ops(op2, ins_flags & 0xFF);
+				umul(cast(uint) *op1, cast(uint *) op2);
+				break;
+			case INS.UDIV:
+				get_ops(op1, (ins_flags >> 8) & 0xFF);
+				get_ops(op2, ins_flags & 0xFF);
+				udiv(cast(uint) *op1, cast(uint *) op2);
+				break;
+			case INS.UREADW:
+				get_ops(op1, (ins_flags >> 8) & 0xFF);
+				get_ops(op2, ins_flags & 0xFF);
+//				read!uint(cast(uint) *op1, cast(uint *) op2);
+				break;
+			case INS.UWRITEW:
+				get_ops(op1, (ins_flags >> 8) & 0xFF);
+				get_ops(op2, ins_flags & 0xFF);
+				write!uint(cast(int *) op1, *op2);
 				break;
 		}
 
