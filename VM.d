@@ -217,23 +217,25 @@ class VM
 	}
 
 	/**
-	 * Divides *op2 by op1
+	 * Divides *op2 by *op1 (integer division)
 	 * Can set negative or zero flag
 	 * Params:
-	 *		op1 is the first value
+	 *		*op1 is the first value and where the remainder gets stored
 	 *		*op2 is the second value and is where the result gets stored
 	 **/
-	private void div(int op1, int *op2)
+	private void div(int *op1, int *op2)
 	{
 		debug(div) { writeln("Dividing"); }
-		if(op1 == 0) 
+		if(*op1 == 0) 
 		{
 			stdout.flush();
 			exception_reg = EXC.DIV_BY_ZERO;
 		}
 		else
 		{
-			*op2 = *op2 / op1;
+			int tmp = *op2 / *op1;
+			*op1 = *op2 % *op1;
+			*op2 = tmp;
 			flags.zero = *op2 == 0;
 			flags.negative = *op2 < 0;
 		}
@@ -285,23 +287,25 @@ class VM
 	}
 
 	/**
-	 * Does an unsigned division of *op2 by op1
+	 * Does an unsigned division of *op2 by *op1
 	 * Can set zero flag
 	 * Params:
-	 *		op1 is the first value
+	 *		*op1 is the first value and where the remainder gets stored
 	 *		*op2 is the second value and is where the result gets stored
 	 **/
-	private void udiv(uint op1, uint *op2)
+	private void udiv(uint *op1, uint *op2)
 	{
 		debug(udiv) { writeln("Unsigned division"); }
-		if(op1 == 0) 
+		if(*op1 == 0) 
 		{
 			stdout.flush();
 			exception_reg = EXC.DIV_BY_ZERO;
 		}
 		else
 		{
-			*op2 = *op2 / op1;
+			uint tmp = *op2 / *op1;
+			*op1 = *op2 % *op1;
+			*op2 = tmp;
 			flags.zero = *op2 == 0;
 			// Set negative flag to false?
 		}
@@ -391,42 +395,42 @@ class VM
 			case INS.READC:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				read!char(cast(int *) op1, *op2);
+				read!char(op1, *op2);
 				break;
 			case INS.READB:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				read!byte(cast(int *) op1, *op2);
+				read!byte(op1, *op2);
 				break;
 			case INS.READH:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				read!short(cast(int *) op1, *op2);
+				read!short(op1, *op2);
 				break;
 			case INS.READW:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				read!int(cast(int *) op1, *op2);
+				read!int(op1, *op2);
 				break;
 			case INS.WRITEC:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				write!char(cast(int *) op1, *op2);
+				write!char(op1, *op2);
 				break;
 			case INS.WRITEB:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				write!byte(cast(int *) op1, *op2);
+				write!byte(op1, *op2);
 				break;
 			case INS.WRITEH:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				write!short(cast(int *) op1, *op2);
+				write!short(op1, *op2);
 				break;
 			case INS.WRITEW:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				write!int(cast(int *) op1, *op2);
+				write!int(op1, *op2);
 				break;
 			case INS.PUSH:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
@@ -459,7 +463,7 @@ class VM
 			case INS.DIV:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				div(*op1, op2);
+				div(op1, op2);
 				break;
 			case INS.UADD:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
@@ -479,7 +483,7 @@ class VM
 			case INS.UDIV:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				udiv(cast(uint) *op1, cast(uint *) op2);
+				udiv(cast(uint *) op1, cast(uint *) op2);
 				break;
 			case INS.UREADW:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
@@ -489,7 +493,7 @@ class VM
 			case INS.UWRITEW:
 				get_ops(op1, (ins_flags >> 8) & 0xFF);
 				get_ops(op2, ins_flags & 0xFF);
-				write!uint(cast(int *) op1, *op2);
+				write!uint(op1, *op2);
 				break;
 		}
 
