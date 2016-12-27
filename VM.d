@@ -7,9 +7,9 @@ import core.checkedint;
 enum OPERANDS { REG = 1, IDATA = 2, ADDR = 4 };
 // Come up with shorter names for some of these
 enum INS { HALT, READC, READB, READH, READW, WRITEC, WRITEB, WRITEH, WRITEW,
-         //0	 1		2	   3	  4		 5		 6		 7		 8
+         //0     1      2      3      4      5       6       7       8
            PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, UREADW, UWRITEW };
-         //9	 10	  11   12	13   14   15   16    17    18    19	   20	   21
+         //9     10   11   12   13   14   15   16    17    18    19	   20      21
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
 enum EXC { DIV_BY_ZERO };
@@ -28,7 +28,7 @@ private:
     int exception_reg;
     ushort code_ptr, data_ptr;
     ushort stack_ptr;
-    int[] code_seg;
+    int[] code_seg; // The max size of the code and data segment is 65536
     int[] data_seg;
     int[STACK_SIZE] stack_seg;
     ushort ins, ins_flags;
@@ -51,7 +51,7 @@ private:
      * Params: input is the binary file to run
      */
     public void load(File input)
-        out
+    out
     {
         assert(code_size > 0);
     }
@@ -86,7 +86,6 @@ private:
      **/
     private void halt()
     {
-        writeln("HALTING");
         import core.runtime: Runtime;
         import core.stdc.stdlib: exit;
         Runtime.terminate();
@@ -488,7 +487,7 @@ private:
             case INS.UREADW:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
-                //				read!uint(cast(uint) *op1, cast(uint *) op2);
+                read!uint(op1, *op2);
                 break;
             case INS.UWRITEW:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
