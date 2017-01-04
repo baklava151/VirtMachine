@@ -9,8 +9,9 @@ enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
          //0     1    2    3    4    5    6    7    8
            PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, URDW, UWRW,
          //9     10   11   12   13   14   15   16    17    18    19	   20    21
-           CMP, UCMP, JMP, JE, JNE, JG, JGE, JL, JLE, JZ, JNZ };
-         //22   23    24   25  26   27  28   29  30   31  32
+           CMP, UCMP, JMP, JE, JNE, JG, JGE, JL, JLE, JZ, JNZ, JN, JNN, JO, JNO
+         //22   23    24   25  26   27  28   29  30   31  32   33  34   35  36
+};
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
 enum EXC { DIV_BY_ZERO };
@@ -598,6 +599,22 @@ private:
             case INS.JNZ:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 !flags.zero && jmp(*op1);
+                break;
+            case INS.JN:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                flags.negative && jmp(*op1);
+                break;
+            case INS.JNN:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                !flags.negative && jmp(*op1);
+                break;
+            case INS.JO:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                flags.overflow && jmp(*op1);
+                break;
+            case INS.JNO:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                !flags.overflow && jmp(*op1);
                 break;
         }
 

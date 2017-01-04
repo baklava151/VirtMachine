@@ -32,6 +32,10 @@ JL: 29, 0x1D
 JLE: 30, 0x1E
 JZ: 31, 0x1F
 JNZ: 32, 0x20
+JN: 33, 0x21
+JNN: 34, 0x22
+JO: 35, 0x23
+JNO: 36, 0x24
 
 Instruction Operands:
 REG: 1
