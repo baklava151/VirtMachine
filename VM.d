@@ -5,11 +5,12 @@ import std.conv;
 import core.checkedint;
 
 enum OPERANDS { REG = 1, IDATA = 2, ADDR = 4 };
-// Come up with shorter names for some of these
 enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
          //0     1    2    3    4    5    6    7    8
-           PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, URDW, UWRW };
+           PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, URDW, UWRW,
          //9     10   11   12   13   14   15   16    17    18    19	   20    21
+           CMP, UCMP, JMP, JE, JNE, JG, JGE, JL, JLE, JZ, JNZ };
+         //22   23    24   25  26   27  28   29  30   31  32
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
 enum EXC { DIV_BY_ZERO };
@@ -19,6 +20,9 @@ struct Flags
     bool overflow;
     bool zero;
     bool negative;
+    bool eq;
+    bool lt;
+    bool gt;
 }
 
 class VM
@@ -312,6 +316,49 @@ private:
     }
 
     /**
+     * Compares two operators, can either be signed or unsigned
+     * eq, lt and gt flags will be cleared before the comparisons
+     * Sets one of eq, lt or gt flags
+     * Params:
+     *      op1 is the first value, and is compared to op2
+     *      op2 is the second value
+     **/
+    private void cmp(T)(in T op1, in T op2)
+    {
+        with(flags)
+        {
+            eq = lt = gt = false;
+            if(op1 == op2)
+            {
+                eq = true;
+            }
+            else if(op1 < op2)
+            {
+                lt = true;
+            }
+            else
+            {
+                gt = true;
+            }
+        }
+    }
+
+    /**
+     * Jumps to a given address
+     * Params:
+     *      op1 holds the address to jump to
+     **/
+    private void jmp(in int op1)
+    in
+    {
+        assert(op1 >= 0 && op1 <= short.max);
+    }
+    body
+    {
+        code_ptr = cast(ushort) (op1 - 1);
+    }
+
+    /**
      * Executes the given instruction
      * Format of an instruction within a binary is op2 flags, then op1 flags, then instruction itself
      * Params:
@@ -496,7 +543,7 @@ private:
                 get_ops(op2, ins_flags & 0xFF);
                 udiv(cast(uint *) op1, cast(uint *) op2);
                 break;
-            case INS.URW:
+            case INS.URDW:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 read!uint(op1, *op2);
@@ -505,6 +552,52 @@ private:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 write!uint(op1, *op2);
+                break;
+            case INS.CMP:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                cmp!int(*op1, *op2);
+                break;
+            case INS.UCMP:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                cmp!uint(cast(uint) *op1, cast(uint) *op2);
+                break;
+            case INS.JMP:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                jmp(*op1);
+                break;
+            case INS.JE:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                flags.eq && jmp(*op1);
+                break;
+            case INS.JNE:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                !flags.eq && jmp(*op1);
+                break;
+            case INS.JG:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                flags.gt && jmp(*op1);
+                break;
+            case INS.JGE:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                !flags.lt && jmp(*op1);
+                break;
+            case INS.JL:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                flags.lt && jmp(*op1);
+                break;
+            case INS.JLE:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                !flags.gt && jmp(*op1);
+                break;
+            case INS.JZ:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                flags.zero && jmp(*op1);
+                break;
+            case INS.JNZ:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                !flags.zero && jmp(*op1);
                 break;
         }
 
