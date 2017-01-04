@@ -351,7 +351,7 @@ private:
     private void jmp(in int op1)
     in
     {
-        assert(op1 >= 0 && op1 <= short.max);
+        assert(op1 >= 0 && op1 <= ushort.max);
     }
     body
     {
