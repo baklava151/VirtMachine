@@ -6,10 +6,10 @@ import core.checkedint;
 
 enum OPERANDS { REG = 1, IDATA = 2, ADDR = 4 };
 // Come up with shorter names for some of these
-enum INS { HALT, READC, READB, READH, READW, WRITEC, WRITEB, WRITEH, WRITEW,
-         //0     1      2      3      4      5       6       7       8
-           PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, UREADW, UWRITEW };
-         //9     10   11   12   13   14   15   16    17    18    19	   20      21
+enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
+         //0     1    2    3    4    5    6    7    8
+           PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, URDW, UWRW };
+         //9     10   11   12   13   14   15   16    17    18    19	   20    21
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
 enum EXC { DIV_BY_ZERO };
@@ -48,7 +48,8 @@ private:
 
     /**
      * Load up the code and data section from the file
-     * Params: input is the binary file to run
+     * Params: 
+     *      input is the binary file to run
      */
     public void load(File input)
     out
@@ -95,8 +96,8 @@ private:
     /**
      * Reads length Ts from stdin to dest
      * Params:
-     *		dest holds a pointer to the beginning of memory to be read to
-     *		length holds the amount of Ts to be read
+     *      dest holds a pointer to the beginning of memory to be read to
+     *      length holds the amount of Ts to be read
      **/
     private void read(T)(int *dest, in ulong length)
     {
@@ -109,8 +110,8 @@ private:
     /**
      * Writes length Ts from src to stdout
      * Params:
-     *		src holds a pointer to the beginning of memory to be read from
-     *		length hold the amount of Ts to write
+     *      src holds a pointer to the beginning of memory to be read from
+     *      length hold the amount of Ts to write
      **/
     private void write(T)(int *src, in uint length)
     {
@@ -123,7 +124,7 @@ private:
     /**
      * Pushes a value onto the stack
      * Params:
-     *		op1 holds value to be pushed
+     *      op1 holds value to be pushed
      **/
     private void push(in int op1)
     {
@@ -142,7 +143,7 @@ private:
     /**
      * Pops a value off the stack
      * Params:
-     *		op1 holds the destination address
+     *      op1 holds the destination address
      **/
     private void pop(int *op1)
     {
@@ -159,10 +160,10 @@ private:
     }
 
     /**
-     * Moves the value in op1 to *op2
+     * Moves a value from a source to a destination
      * Params:
-     * 		op1 holds the value to be moved
-     *		*op2 holds where the value is being moved
+     *      op1 holds the value to be moved
+     *      *op2 holds where the value is being moved
      **/
     private void mov(in int op1, int *op2)
     {
@@ -171,11 +172,11 @@ private:
     }
 
     /**
-     * Adds op1 and *op2
+     * Adds two signed values
      * Can set overflow, negative or zero flag
      * Params:
-     *		op1 is the first value
-     *		*op2 holds the second value and where the result gets stored
+     *      op1 is the first value
+     *      *op2 holds the second value and where the result gets stored
      **/
     private void add(int op1, int *op2)
     {
@@ -186,11 +187,11 @@ private:
     }
 
     /**
-     * Subtracts op1 from *op2
+     * Subtracts two signed values
      * Can set overflow, negative or zero flag
      * Params:
-     *		op1 is the first value
-     *		*op2 holds the second value and where the result gets stored
+     *      op1 is the first value
+     *      *op2 holds the second value and where the result gets stored
      **/
     private void sub(int op1, int *op2)
     {
@@ -201,11 +202,11 @@ private:
     }
 
     /**
-     * Multiplies op1 and *op2
+     * Multiplies two signed values
      * Can set overflow, negative or zero flag
      * Params:
-     *		op1 is the first value
-     *		*op2 is the second value and is where the result gets stored
+     *      op1 is the first value
+     *      *op2 is the second value and is where the result gets stored
      **/
     private void mul(int op1, int *op2)
     {
@@ -216,11 +217,11 @@ private:
     }
 
     /**
-     * Divides *op2 by *op1 (integer division)
+     * Performs integer division two values
      * Can set negative or zero flag
      * Params:
-     *		*op1 is the first value and where the remainder gets stored
-     *		*op2 is the second value and is where the result gets stored
+     *      *op1 is the first value and where the remainder gets stored
+     *      *op2 is the second value and is where the result gets stored
      **/
     private void div(int *op1, int *op2)
     {
@@ -241,11 +242,11 @@ private:
     }
 
     /**
-     * Performs unsigned addition on op1 and *op2
+     * Adds two unsigned values
      * Can set overflow or zero flag
      * Params:
-     *		op1 is the first value
-     *		*op2 is the second value and where the result gets stored
+     *      op1 is the first value
+     *      *op2 is the second value and where the result gets stored
      **/
     private void uadd(uint op1, uint *op2)
     {
@@ -256,11 +257,11 @@ private:
     }
 
     /**
-     * Does unsigned subtraction of op1 from *op2
+     * Subtracts two unsigned values
      * Can set overflow or zero flag
      * Params:
-     *		op1 is the value to subtract
-     *		*op2 is the value to be subtracted from and where the result gets stored
+     *      op1 is the value to subtract
+     *      *op2 is the value to be subtracted from and where the result gets stored
      **/
     private void usub(uint op1, uint *op2)
     {
@@ -271,11 +272,11 @@ private:
     }
 
     /**
-     * Performs unsigned multiplication of op1 and *op2
+     * Multiplies two unsigned values
      * Can set overflow or zero flag
      * Params:
-     *		op1 is the first value
-     *		*op2 is the second value and is where the result gets stored
+     *      op1 is the first value
+     *      *op2 is the second value and is where the result gets stored
      **/
     private void umul(uint op1, uint *op2)
     {
@@ -286,11 +287,11 @@ private:
     }
 
     /**
-     * Does an unsigned division of *op2 by *op1
+     * Performs integer division on two unsigned values
      * Can set zero flag
      * Params:
-     *		*op1 is the first value and where the remainder gets stored
-     *		*op2 is the second value and is where the result gets stored
+     *      *op1 is the first value and where the remainder gets stored
+     *      *op2 is the second value and is where the result gets stored
      **/
     private void udiv(uint *op1, uint *op2)
     {
@@ -312,17 +313,28 @@ private:
 
     /**
      * Executes the given instruction
-     * Format in binary is op2 flags, op1 flags, then instruction itself
+     * Format of an instruction within a binary is op2 flags, then op1 flags, then instruction itself
      * Params:
-     *		instr holds the value of the next instruction to execute and its flags
+     *      instr holds the value of the next instruction to execute and its flags
      **/
     public void exec_ins(in uint instr)
     {
         ins_flags = cast(ushort) (instr & 0xFFFF);
         ins = cast(ushort) ((instr >> 16) & 0xFFFF);
 
+        /**
+         * Once the next instruction is found, its operand(s) are grabbed one at a time
+         * using this function
+         * Params:
+         *      *op is set to point to the memory address of the operand, which can be
+         *      from the regs array, the data array or an immediate operand, in which case
+         *      it is set to hold the address of either tmp1 or tmp2 so that it doesn't accidently clobber
+         *      a value at another memory address it was previously holding
+         *      flags indicates whether we are grabbing a register, an area of memory or
+         *      immediate data
+         **/
         void get_ops(ref int *op, in ubyte flags)
-            in
+        in
         {
             assert(ins >= INS.min && ins <= INS.max, "Invalid instruction");
             assert(flags == OPERANDS.REG || flags == OPERANDS.IDATA || flags == OPERANDS.ADDR, "Invalid flags");
