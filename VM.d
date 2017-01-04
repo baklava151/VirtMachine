@@ -9,8 +9,10 @@ enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
          //0     1    2    3    4    5    6    7    8
            PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, URDW, UWRW,
          //9     10   11   12   13   14   15   16    17    18    19	   20    21
-           CMP, UCMP, JMP, JE, JNE, JG, JGE, JL, JLE, JZ, JNZ, JN, JNN, JO, JNO
+           CMP, UCMP, JMP, JE, JNE, JG, JGE, JL, JLE, JZ, JNZ, JN, JNN, JO, JNO,
          //22   23    24   25  26   27  28   29  30   31  32   33  34   35  36
+           JR, JNR, JP, JNP
+         //37  38   39  40
 };
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
@@ -21,6 +23,7 @@ struct Flags
     bool overflow;
     bool zero;
     bool negative;
+    bool parity;
     bool eq;
     bool lt;
     bool gt;
@@ -43,6 +46,7 @@ private:
     int *op2;
     int tmp1, tmp2;
     bool op_switch = true;
+    bool rotate; // Almost threw this in the Flag struct, but I figured it's not technically a flag
     Flags flags;
 
     public this()
@@ -615,6 +619,22 @@ private:
             case INS.JNO:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 !flags.overflow && jmp(*op1);
+                break;
+            case INS.JR:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                rotate && jmp(*op1);
+                break;
+            case INS.JNR:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                !rotate && jmp(*op1);
+                break;
+            case INS.JP:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                flags.parity && jmp(*op1);
+                break;
+            case INS.JNP:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                !flags.parity && jmp(*op1);
                 break;
         }
 

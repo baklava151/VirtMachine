@@ -36,6 +36,10 @@ JN: 33, 0x21
 JNN: 34, 0x22
 JO: 35, 0x23
 JNO: 36, 0x24
+JR: 37, 0x25
+JNR: 38, 0x26
+JP: 39, 0x27
+JNP: 40, 0x28
 
 Instruction Operands:
 REG: 1
