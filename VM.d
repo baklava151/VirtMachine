@@ -403,42 +403,42 @@ private:
             case INS.HALT:
                 halt();
                 break;
-            case INS.READC:
+            case INS.RDC:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 read!char(op1, *op2);
                 break;
-            case INS.READB:
+            case INS.RDB:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 read!byte(op1, *op2);
                 break;
-            case INS.READH:
+            case INS.RDH:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 read!short(op1, *op2);
                 break;
-            case INS.READW:
+            case INS.RDW:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 read!int(op1, *op2);
                 break;
-            case INS.WRITEC:
+            case INS.WRC:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 write!char(op1, *op2);
                 break;
-            case INS.WRITEB:
+            case INS.WRB:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 write!byte(op1, *op2);
                 break;
-            case INS.WRITEH:
+            case INS.WRH:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 write!short(op1, *op2);
                 break;
-            case INS.WRITEW:
+            case INS.WRW:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 write!int(op1, *op2);
@@ -496,12 +496,12 @@ private:
                 get_ops(op2, ins_flags & 0xFF);
                 udiv(cast(uint *) op1, cast(uint *) op2);
                 break;
-            case INS.UREADW:
+            case INS.URW:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 read!uint(op1, *op2);
                 break;
-            case INS.UWRITEW:
+            case INS.UWRW:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
                 write!uint(op1, *op2);
