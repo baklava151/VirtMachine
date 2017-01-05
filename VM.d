@@ -11,8 +11,8 @@ enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
          //9     10   11   12   13   14   15   16    17    18    19	   20    21
            CMP, UCMP, JMP, JE, JNE, JG, JGE, JL, JLE, JZ, JNZ, JN, JNN, JO, JNO,
          //22   23    24   25  26   27  28   29  30   31  32   33  34   35  36
-           JR, JNR, JP, JNP
-         //37  38   39  40
+           JR, JNR, JP, JNP, INC, DEC, AND, OR, XOR, NOT, NEG
+         //37  38   39  40   41   42   43   44  45   46   47
 };
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
@@ -383,6 +383,79 @@ private:
     }
 
     /**
+     * Bitwise and two values
+     * Can set zero, parity or negative flag
+     * Params:
+     *      op1 holds the first value
+     *      *op2 holds the second value and is where the result is stored
+     **/
+    private void and(in int op1, int *op2)
+    {
+        *op2 = op1 & *op2;
+        flags.zero = *op2 == 0;
+        set_parity(cast(uint) *op2);
+        flags.negative = *op2 < 0;
+    }
+
+    /**
+     * Bitwise or two values
+     * Can set zero, parity or negative flag
+     * Params:
+     *      op1 holds the first value
+     *      *op2 holds the second value and is where the result is stored
+     **/
+    private void or(in int op1, int *op2)
+    {
+        *op2 = op1 | *op2;
+        flags.zero = *op2 == 0;
+        set_parity(cast(uint) *op2);
+        flags.negative = *op2 < 0;
+    }
+
+    /**
+     * Bitwise xor two values
+     * Can set zero, parity or negative flag
+     * Params:
+     *      op1 holds the first value
+     *      *op2 holds the second value and is where the result is stored
+     **/
+    private void xor(in int op1, int *op2)
+    {
+        *op2 = op1 ^ *op2;
+        flags.zero = *op2 == 0;
+        set_parity(cast(uint) *op2);
+        flags.negative = *op2 < 0;
+    }
+
+    /**
+     * Perform one's complement on a value
+     * Can set zero, parity or negative flag
+     * Params:
+     *      op1 holds the value and is where the result is stored
+     **/
+    private void not(int *op1)
+    {
+        *op1 = ~*op1;
+        flags.zero = *op1 == 0;
+        set_parity(cast(uint) *op1);
+        flags.negative = *op1 < 0;
+    }
+
+    /**
+     * Perform two's complement on a value
+     * Can set zero, parity or negative flag
+     * Params:
+     *      op1 holds the value and is where the result is stored
+     **/
+    private void neg(int *op1)
+    {
+        *op1 = -*op1;
+        flags.zero = *op1 == 0;
+        set_parity(cast(uint) *op1);
+        flags.negative = *op1 < 0;
+    }
+
+    /**
      * Executes the given instruction
      * Format of an instruction within a binary is op2 flags, then op1 flags, then instruction itself
      * Params:
@@ -654,6 +727,35 @@ private:
             case INS.JNP:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 !flags.parity && jmp(*op1);
+                break;
+            case INS.INC:
+                // To be implemented
+                break;
+            case INS.DEC:
+                // To be implemented
+                break;
+            case INS.AND:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                and(*op1, op2);
+                break;
+            case INS.OR:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                or(*op1, op2);
+                break;
+            case INS.XOR:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                xor(*op1, op2);
+                break;
+            case INS.NOT:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                not(op1);
+                break;
+            case INS.NEG:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                neg(op1);
                 break;
         }
 
