@@ -91,6 +91,17 @@ private:
         }
     }
 
+    private void set_parity(uint num)
+    {
+        int tmp;
+        while(num > 0)
+        {
+            tmp += num & 1;
+            num >>>= 1;
+        }
+        flags.parity = !(tmp & 1);
+    }
+
     /**
      * Stops the virtual machine
      **/
@@ -182,7 +193,7 @@ private:
 
     /**
      * Adds two signed values
-     * Can set overflow, negative or zero flag
+     * Can set overflow, negative, parity or zero flag
      * Params:
      *      op1 is the first value
      *      *op2 holds the second value and where the result gets stored
@@ -193,11 +204,12 @@ private:
         *op2 = adds(op1, *op2, flags.overflow);
         flags.negative = *op2 < 0;
         flags.zero = *op2 == 0;
+        set_parity(cast(uint) *op2);
     }
 
     /**
      * Subtracts two signed values
-     * Can set overflow, negative or zero flag
+     * Can set overflow, negative, parity or zero flag
      * Params:
      *      op1 is the first value
      *      *op2 holds the second value and where the result gets stored
@@ -208,11 +220,12 @@ private:
         *op2 = subs(*op2, op1, flags.overflow);
         flags.negative = *op2 < 0;
         flags.zero = *op2 == 0;
+        set_parity(cast(uint) *op2);
     }
 
     /**
      * Multiplies two signed values
-     * Can set overflow, negative or zero flag
+     * Can set overflow, negative, parity or zero flag
      * Params:
      *      op1 is the first value
      *      *op2 is the second value and is where the result gets stored
@@ -223,11 +236,12 @@ private:
         *op2 = muls(op1, *op2, flags.overflow);
         flags.zero = *op2 == 0;
         flags.negative = *op2 < 0;
+        set_parity(cast(uint) *op2);
     }
 
     /**
      * Performs integer division two values
-     * Can set negative or zero flag
+     * Can set negative, parity or zero flag
      * Params:
      *      *op1 is the first value and where the remainder gets stored
      *      *op2 is the second value and is where the result gets stored
@@ -247,12 +261,13 @@ private:
             *op2 = tmp;
             flags.zero = *op2 == 0;
             flags.negative = *op2 < 0;
+            set_parity(cast(uint) *op2);
         }
     }
 
     /**
      * Adds two unsigned values
-     * Can set overflow or zero flag
+     * Can set overflow, parity or zero flag
      * Params:
      *      op1 is the first value
      *      *op2 is the second value and where the result gets stored
@@ -263,11 +278,12 @@ private:
         *op2 = addu(op1, *op2, flags.overflow);
         // Set negative flag to false?
         flags.zero = *op2 == 0;
+        set_parity(*op2);
     }
 
     /**
      * Subtracts two unsigned values
-     * Can set overflow or zero flag
+     * Can set overflow, parity or zero flag
      * Params:
      *      op1 is the value to subtract
      *      *op2 is the value to be subtracted from and where the result gets stored
@@ -278,11 +294,12 @@ private:
         *op2 = subu(*op2, op1, flags.overflow);
         // Set negative flag to false?
         flags.zero = *op2 == 0;
+        set_parity(*op2);
     }
 
     /**
      * Multiplies two unsigned values
-     * Can set overflow or zero flag
+     * Can set overflow, parity or zero flag
      * Params:
      *      op1 is the first value
      *      *op2 is the second value and is where the result gets stored
@@ -293,11 +310,12 @@ private:
         *op2 = mulu(op1, *op2, flags.overflow);
         // Set negative flag to false?
         flags.zero = *op2 == 0;
+        set_parity(*op2);
     }
 
     /**
      * Performs integer division on two unsigned values
-     * Can set zero flag
+     * Can set parity or zero flag
      * Params:
      *      *op1 is the first value and where the remainder gets stored
      *      *op2 is the second value and is where the result gets stored
@@ -316,6 +334,7 @@ private:
             *op1 = *op2 % *op1;
             *op2 = tmp;
             flags.zero = *op2 == 0;
+            set_parity(*op2);
             // Set negative flag to false?
         }
     }
