@@ -474,8 +474,9 @@ private:
         else if(op2 != 0)
         {
             op2 %= 32;
+            *op1 <<= (op2 - 1);
             rotate = cast(bool) (*op1 & 0x80000000); // MSB is shifted into rotate, similar behavior to Intel CPUs
-            *op1 = *op1 << op2;
+            *op1 <<= 1;
             flags.zero = *op1 == 0;
             flags.negative = *op1 < 0;
             set_parity(cast(uint) *op1);
@@ -499,8 +500,9 @@ private:
         if(op2 != 0)
         {
             op2 %= 32;
+            *op1 >>= (op2 - 1);
             rotate = cast(bool) (*op1 & 1); // LSB is shifted into rotate, similar behavior to Intel CPUs
-            *op1 = *op1 >> op2;
+            *op1 >>= 1;
             flags.zero = *op1 == 0;
             flags.negative = *op1 < 0;
             set_parity(cast(uint) *op1);
@@ -524,8 +526,9 @@ private:
         else if(op2 != 0)
         {
             op2 %= 32;
+            *op1 >>>= (op2 - 1);
             rotate = cast(bool) (*op1 & 1); // LSB is shifted into rotate, similar behavior to Intel CPUs
-            *op1 = *op1 >>> op2;
+            *op1 >>>= 1;
             flags.zero = *op1 == 0;
             set_parity(cast(uint) *op1);
         }
