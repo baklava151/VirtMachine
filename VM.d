@@ -11,8 +11,8 @@ enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
          //9     10   11   12   13   14   15   16    17    18    19	   20    21
            CMP, UCMP, JMP, JE, JNE, JG, JGE, JL, JLE, JZ, JNZ, JN, JNN, JO, JNO,
          //22   23    24   25  26   27  28   29  30   31  32   33  34   35  36
-           JR, JNR, JP, JNP, INC, DEC, AND, OR, XOR, NOT, NEG
-         //37  38   39  40   41   42   43   44  45   46   47
+           JR, JNR, JP, JNP, INC, DEC, AND, OR, XOR, NOT, NEG, SHL, SHR, USHR
+         //37  38   39  40   41   42   43   44  45   46   47   48   49   50
 };
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
@@ -456,6 +456,82 @@ private:
     }
 
     /**
+     * Shifts a value left by any number 1-32
+     * Can set zero, parity or negative flag
+     * If op2 is zero, than absolutely nothing happens
+     * Params:
+     *      *op1 holds value to be shifted and is where the result is stored
+     *      op2 holds the amount *op1 gets shifted
+     **/
+    private void shl(int *op1, int op2)
+    {
+        if(op2 >= 32 && op2 % 32 == 0)
+        {
+            *op1 = 0; // D doesn't shift by more than or the same as the number of bits in a type
+                      // So this has to get set to zero if we try to shift by 32 or a multiple of 32
+                      // Same for shr and ushr
+        }
+        else if(op2 != 0)
+        {
+            op2 %= 32;
+            rotate = cast(bool) (*op1 & 0x80000000); // MSB is shifted into rotate, similar behavior to Intel CPUs
+            *op1 = *op1 << op2;
+            flags.zero = *op1 == 0;
+            flags.negative = *op1 < 0;
+            set_parity(cast(uint) *op1);
+        }
+    }
+
+    /**
+     * Shifts a value right (signed) by any number 1-32
+     * Can set zero, parity or negative flag
+     * If op2 is zero, than absolutely nothing happens
+     * Params:
+     *      *op1 holds value to be shifted and is where the result is stored
+     *      op2 holds the amount *op1 gets shifted
+     **/
+    private void shr(int *op1, int op2)
+    {
+        if(op2 >= 32 && op2 % 32 == 0)
+        {
+            *op1 = 0;
+        }
+        if(op2 != 0)
+        {
+            op2 %= 32;
+            rotate = cast(bool) (*op1 & 1); // LSB is shifted into rotate, similar behavior to Intel CPUs
+            *op1 = *op1 >> op2;
+            flags.zero = *op1 == 0;
+            flags.negative = *op1 < 0;
+            set_parity(cast(uint) *op1);
+        }
+    }
+
+    /**
+     * Shifts a value right (unsigned) by any number 1-32
+     * Can set zero or parity flag
+     * If op2 is zero, than absolutely nothing happens
+     * Params:
+     *      *op1 holds value to be shifted and is where the result is stored
+     *      op2 holds the amount *op1 gets shifted
+     **/
+    private void ushr(int *op1, int op2)
+    {
+        if(op2 >= 32 && op2 % 32 == 0)
+        {
+            *op1 = 0;
+        }
+        else if(op2 != 0)
+        {
+            op2 %= 32;
+            rotate = cast(bool) (*op1 & 1); // LSB is shifted into rotate, similar behavior to Intel CPUs
+            *op1 = *op1 >>> op2;
+            flags.zero = *op1 == 0;
+            set_parity(cast(uint) *op1);
+        }
+    }
+
+    /**
      * Executes the given instruction
      * Format of an instruction within a binary is op2 flags, then op1 flags, then instruction itself
      * Params:
@@ -729,10 +805,12 @@ private:
                 !flags.parity && jmp(*op1);
                 break;
             case INS.INC:
-                // To be implemented
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                ++*op1;
                 break;
             case INS.DEC:
-                // To be implemented
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                --*op1;
                 break;
             case INS.AND:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
@@ -756,6 +834,21 @@ private:
             case INS.NEG:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 neg(op1);
+                break;
+            case INS.SHL:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                shl(op1, *op2);
+                break;
+            case INS.SHR:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                shr(op1, *op2);
+                break;
+            case INS.USHR:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                ushr(op1, *op2);
                 break;
         }
 

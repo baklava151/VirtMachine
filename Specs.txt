@@ -47,6 +47,9 @@ OR: 44, 0x2C
 XOR: 45, 0x2D
 NOT: 46, 0x2E
 NEG: 47, 0x2F
+SHL: 48, 0x30
+SHR: 49, 0x31
+USHR: 50, 0x32
 
 Instruction Operands:
 REG: 1
