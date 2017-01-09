@@ -50,6 +50,10 @@ NEG: 47, 0x2F
 SHL: 48, 0x30
 SHR: 49, 0x31
 USHR: 50, 0x32
+ROR: 51, 0x33
+ROL: 52, 0x34
+RCR: 53, 0x35
+RCL: 54, 0x36
 
 Instruction Operands:
 REG: 1

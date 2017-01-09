@@ -11,8 +11,10 @@ enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
          //9     10   11   12   13   14   15   16    17    18    19	   20    21
            CMP, UCMP, JMP, JE, JNE, JG, JGE, JL, JLE, JZ, JNZ, JN, JNN, JO, JNO,
          //22   23    24   25  26   27  28   29  30   31  32   33  34   35  36
-           JR, JNR, JP, JNP, INC, DEC, AND, OR, XOR, NOT, NEG, SHL, SHR, USHR
+           JR, JNR, JP, JNP, INC, DEC, AND, OR, XOR, NOT, NEG, SHL, SHR, USHR,
          //37  38   39  40   41   42   43   44  45   46   47   48   49   50
+           ROR, ROL, RCR, RCL
+         //51   52   53   54
 };
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
@@ -456,82 +458,82 @@ private:
     }
 
     /**
-     * Shifts a value left by any number 1-32
-     * Can set zero, parity or negative flag
+     * Shifts a value left or right or right unsigned (depending on op) by any number 1-32
+     * Can set zero, parity or negative flag (negative flag only if a signed shift)
      * If op2 is zero, than absolutely nothing happens
      * Params:
      *      *op1 holds value to be shifted and is where the result is stored
      *      op2 holds the amount *op1 gets shifted
      **/
-    private void shl(int *op1, int op2)
+    private void sh(string op)(int *op1, int op2)
     {
         if(op2 >= 32 && op2 % 32 == 0)
         {
             *op1 = 0; // D doesn't shift by more than or the same as the number of bits in a type
                       // So this has to get set to zero if we try to shift by 32 or a multiple of 32
-                      // Same for shr and ushr
         }
         else if(op2 != 0)
         {
             op2 %= 32;
-            *op1 <<= (op2 - 1);
-            rotate = cast(bool) (*op1 & 0x80000000); // MSB is shifted into rotate, similar behavior to Intel CPUs
-            *op1 <<= 1;
+            mixin("*op1 " ~ op ~ " (op2 - 1);");
+            static if(op == "<<")
+            {
+                rotate = cast(bool) (*op1 & 0x80000000); // MSB is shifted into rotate, similar behavior to Intel CPUs
+            }
+            else
+            {
+                rotate = cast(bool) (*op1 & 1); // LSB is shifted into rotate, similar behavior to Intel CPUs
+            }
+            mixin("*op1 " ~ op ~ " 1;");
             flags.zero = *op1 == 0;
-            flags.negative = *op1 < 0;
+            static if(op == "<<=" || op == ">>=") { flags.negative = *op1 < 0; }
             set_parity(cast(uint) *op1);
         }
     }
 
     /**
-     * Shifts a value right (signed) by any number 1-32
-     * Can set zero, parity or negative flag
-     * If op2 is zero, than absolutely nothing happens
+     * Rotates the bits in a value left or right depending on ins
      * Params:
-     *      *op1 holds value to be shifted and is where the result is stored
-     *      op2 holds the amount *op1 gets shifted
+     *      *op1 is the value to be rotated and where the result is stored
+     *      op2 is the amount to be rotated by
      **/
-    private void shr(int *op1, int op2)
+    private void rot(string ins)(int *op1, int op2)
     {
-        if(op2 >= 32 && op2 % 32 == 0)
+        mixin("
+        asm
         {
-            *op1 = 0;
+            mov RAX, op1;
+            mov ECX, op2[EBP];" ~
+            ins ~ " [RAX], CL;
         }
-        if(op2 != 0)
-        {
-            op2 %= 32;
-            *op1 >>= (op2 - 1);
-            rotate = cast(bool) (*op1 & 1); // LSB is shifted into rotate, similar behavior to Intel CPUs
-            *op1 >>= 1;
-            flags.zero = *op1 == 0;
-            flags.negative = *op1 < 0;
-            set_parity(cast(uint) *op1);
-        }
+        ");       
     }
 
     /**
-     * Shifts a value right (unsigned) by any number 1-32
-     * Can set zero or parity flag
-     * If op2 is zero, than absolutely nothing happens
+     * Rotates the bits in a value left or right depending on ins
+     * When a bit is shifted off the end, it is moved into the rotate flag
+     * The value in the rotate flag is shifted back into the value
      * Params:
-     *      *op1 holds value to be shifted and is where the result is stored
-     *      op2 holds the amount *op1 gets shifted
+     *      *op1 is the value to be rotated and where the result is stored
+     *      op2 is the amount to be rotated by
      **/
-    private void ushr(int *op1, int op2)
+    private void rotc(string ins)(int *op1, int op2)
     {
-        if(op2 >= 32 && op2 % 32 == 0)
+        mixin("
+        asm
         {
-            *op1 = 0;
+            mov RBX, this;
+            lahf; // Next three lines set the actual carry flag to the value of rotate
+            or AH, rotate[RBX];
+            sahf;
+            mov RDX, op1;
+            mov ECX, op2[EBP];" ~
+            ins ~ " [EDX], CL;
+            lahf; // Set rotate to CF
+            and AH, 1;
+            mov rotate[RBX], AH;
         }
-        else if(op2 != 0)
-        {
-            op2 %= 32;
-            *op1 >>>= (op2 - 1);
-            rotate = cast(bool) (*op1 & 1); // LSB is shifted into rotate, similar behavior to Intel CPUs
-            *op1 >>>= 1;
-            flags.zero = *op1 == 0;
-            set_parity(cast(uint) *op1);
-        }
+        ");
     }
 
     /**
@@ -841,17 +843,38 @@ private:
             case INS.SHL:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
-                shl(op1, *op2);
+                sh!"<<="(op1, *op2);
                 break;
             case INS.SHR:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
-                shr(op1, *op2);
+                sh!">>="(op1, *op2);
                 break;
             case INS.USHR:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
-                ushr(op1, *op2);
+                //ushr(op1, *op2);
+                sh!">>>="(op1, *op2);
+                break;
+            case INS.ROR:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                rot!"ror"(op1, *op2);
+                break;
+            case INS.ROL:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                rot!"rol"(op1, *op2);
+                break;
+            case INS.RCR:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                rotc!"rcr"(op1, *op2);
+                break;
+            case INS.RCL:
+                get_ops(op1, (ins_flags >> 8) & 0xFF);
+                get_ops(op2, ins_flags & 0xFF);
+                rotc!"rcl"(op1, *op2);
                 break;
         }
 
