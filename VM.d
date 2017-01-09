@@ -493,6 +493,7 @@ private:
 
     /**
      * Rotates the bits in a value left or right depending on ins
+     * Can set zero, negative or parity flag
      * Params:
      *      *op1 is the value to be rotated and where the result is stored
      *      op2 is the amount to be rotated by
@@ -506,13 +507,17 @@ private:
             mov ECX, op2[EBP];" ~
             ins ~ " [RAX], CL;
         }
-        ");       
+        ");
+        flags.zero = *op1 == 0;
+        flags.negative = *op1 < 0;
+        set_parity(cast(uint) *op1);       
     }
 
     /**
      * Rotates the bits in a value left or right depending on ins
      * When a bit is shifted off the end, it is moved into the rotate flag
      * The value in the rotate flag is shifted back into the value
+     * Can set zero, negative or parity flag
      * Params:
      *      *op1 is the value to be rotated and where the result is stored
      *      op2 is the amount to be rotated by
@@ -534,6 +539,9 @@ private:
             mov rotate[RBX], AH;
         }
         ");
+        flags.zero = *op1 == 0;
+        flags.negative = *op1 < 0;
+        set_parity(cast(uint) *op1);
     }
 
     /**
