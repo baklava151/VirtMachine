@@ -5,7 +5,7 @@ import std.conv;
 import core.checkedint;
 
 enum OPERANDS { REG = 1, IDATA = 2, ADDR = 4 };
-enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
+enum INS { HLT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
          //0     1    2    3    4    5    6    7    8
            PUSH, POP, MOV, ADD, SUB, MUL, DIV, UADD, USUB, UMUL, UDIV, URDW, UWRW,
          //9     10   11   12   13   14   15   16    17    18    19	   20    21
@@ -18,7 +18,7 @@ enum INS { HALT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
 };
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
-enum EXC { DIV_BY_ZERO };
+enum EXC { DIV_BY_ZERO, SEG_FAULT };
 
 struct Flags
 {
@@ -116,30 +116,45 @@ private:
     }
     
     /**
-     * Reads length Ts from stdin to dest
+     * Reads a certain number of Ts from stdin to a destination
+     * Can throw a segmentation fault exception of data being read
+     * flows out of the data segment
      * Params:
-     *      dest holds a pointer to the beginning of memory to be read to
-     *      length holds the amount of Ts to be read
+     *      op1 holds a pointer to the beginning of memory to be read to
+     *      op2 holds the amount of Ts to be read
      **/
-    private void read(T)(int *dest, in ulong length)
+    private void read(T)(int *op1, in uint op2)
     {
-        foreach(i; 0..length)
+        if(op1 + op2 > &data_seg[data_size - 1]) // Data flowing out of data_seg?
         {
-            readf("%s", cast(T *) &dest[i]);
+            exception_reg = EXC.SEG_FAULT;
+        }
+        else
+        {
+            foreach(i; 0..op2)
+            {
+                readf("%s", cast(T *) &op1[i]);
+            }
         }
     }
 
     /**
-     * Writes length Ts from src to stdout
+     * Writes a certain number of Ts from a source to stdout
+     * Can throw a segmentation fault exception if it attempts
+     * to write data outside of the data segment
      * Params:
-     *      src holds a pointer to the beginning of memory to be read from
-     *      length hold the amount of Ts to write
+     *      op1 holds a pointer to the beginning of memory to be read from
+     *      op2 hold the amount of Ts to write
      **/
-    private void write(T)(int *src, in uint length)
+    private void write(T)(int *op1, in uint op2)
     {
-        foreach(i; 0..length)
+        if(op1 + op2 > &data_seg[data_size - 1])
         {
-            writef("%s", cast(T) src[i]);
+            exception_reg = EXC.SEG_FAULT;
+        }
+        foreach(i; 0..op2)
+        {
+            writef("%s", cast(T) op1[i]);
         }
     }
 
@@ -633,7 +648,7 @@ private:
 
         final switch(ins)
         {
-            case INS.HALT:
+            case INS.HLT:
                 halt();
                 break;
             case INS.RDC:
