@@ -18,7 +18,7 @@ enum INS { HLT, RDC, RDB, RDH, RDW, WRC, WRB, WRH, WRW,
 };
 enum STACK_SIZE = 2^^16;
 enum NUM_REGS = 16;
-enum EXC { DIV_BY_ZERO, SEG_FAULT };
+enum EXC { DIV_BY_ZERO, SEG_FAULT, STACK_FAULT };
 
 struct Flags
 {
@@ -125,7 +125,7 @@ private:
      **/
     private void read(T)(int *op1, in uint op2)
     {
-        if(op1 + op2 > &data_seg[data_size - 1]) // Data flowing out of data_seg?
+        if(op1 + op2 > &data_seg[data_size - 1] || op1 + op2 < &data_seg[0]) // Data flowing out of data_seg?
         {
             exception_reg = EXC.SEG_FAULT;
         }
@@ -148,10 +148,11 @@ private:
      **/
     private void write(T)(int *op1, in uint op2)
     {
-        if(op1 + op2 > &data_seg[data_size - 1])
+        if(op1 + op2 > &data_seg[data_size - 1] || op1 + op2 < &data_seg[0])
         {
             exception_reg = EXC.SEG_FAULT;
         }
+
         foreach(i; 0..op2)
         {
             writef("%s", cast(T) op1[i]);
@@ -160,6 +161,7 @@ private:
 
     /**
      * Pushes a value onto the stack
+     * Throws a stack fault if stack is full
      * Params:
      *      op1 holds value to be pushed
      **/
@@ -167,18 +169,22 @@ private:
     {
         if(stack_ptr == STACK_SIZE)
         {
-            throw new Error("Hit upper limit of the stack!");
+            exception_reg = EXC.STACK_FAULT;
         }
-        stack_seg[stack_ptr] = cast(int) op1;
+        
+        stack_seg[stack_ptr] = op1;
+
         debug(push)
         {
             writeln("Pushing: ", stack_seg[stack_ptr]);
         }
+
         ++stack_ptr;
     }
 
     /**
      * Pops a value off the stack
+     * Throws a stack fault if stack is empty
      * Params:
      *      op1 holds the destination address
      **/
@@ -186,13 +192,16 @@ private:
     {
         if(stack_ptr == 0)
         {
-            throw new Error("The stack is empty!");
+            exception_reg = EXC.STACK_FAULT;
         }
+
         --stack_ptr;
+
         debug(pop)
         {
             writeln("Popping: ", stack_seg[stack_ptr]);
         }
+
         *op1 = stack_seg[stack_ptr];
     }
 
@@ -876,7 +885,6 @@ private:
             case INS.USHR:
                 get_ops(op1, (ins_flags >> 8) & 0xFF);
                 get_ops(op2, ins_flags & 0xFF);
-                //ushr(op1, *op2);
                 sh!">>>="(op1, *op2);
                 break;
             case INS.ROR:

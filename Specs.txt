@@ -1,16 +1,131 @@
-Instruction OpCodes:
-HALT: 0, 0x00
-RDC: 1, 0x01
-RDB: 2, 0x02
-RDH: 3, 0x03
-RDW: 4, 0x04
-WRC: 5, 0x05
-WRB: 6, 0x06
-WRH: 7, 0x07
-WRW: 8, 0x08
-PUSH: 9, 0x09
-POP: 10, 0x0A
+Instructions:
+
+Instruction: HLT
+Name: Halt
+Opcode: 0, 0x00
+Operands: None
+Description: Stops the virtual machine when issued
+Flags Affected: None
+Possible Exceptions Raised: None
+
+Instruction: RDC
+Name: Read Char
+Opcode: 1, 0x01
+Operands:
+    Operand 1: Destination where data is read to
+        Type: Register or memory
+    Operand 2: Amount of data to read
+        Type: Register, memory or immediate data
+Description: Reads a certain amount of chars specified by the second operand to the destination address specified by the first operand
+Flags Affected: None
+Possible Exceptions Raised: SEG_FAULT if data being read flow out of the data segment
+
+Instruction: RDB
+Name: Read Byte
+Opcode: 2, 0x02
+Operands:
+    Operand 1: Destination where data is read to
+        Type: Register or memory
+    Operand 2: Amount of data to read
+        Type: Register, memory or immediate data
+Description: Reads a certain amount of bytes specified by the second operand to the destination address specified by the first operand
+Flags Affected: None
+Possible Exceptions Raised: SEG_FAULT if data being read flow out of the data segment
+
+Instruction: RDH
+Name: Read Half-Word
+Opcode: 3, 0x03
+Operands:
+    Operand 1: Destination where data is read to
+        Type: Register or memory
+    Operand 2: Amount of data to read
+        Type: Register, memory or immediate data
+Description: Reads a certain amount of half-words specified by the second operand to the destination address specified by the first operand
+Flags Affected: None
+Possible Exceptions Raised: SEG_FAULT if data being read flow out of the data segment
+
+Instruction: RDW
+Name: Read Word
+Opcode: 4, 0x04
+Operands:
+    Operand 1: Destination where data is read to
+        Type: Register or memory
+    Operand 2: Amount of data to read
+        Type: Register, memory or immediate data
+Description: Reads a certain amount of words specified by the second operand to the destination address specified by the first operand
+Flags Affected: None
+Possible Exceptions Raised: SEG_FAULT if data being read flow out of the data segment
+
+Instruction: WRC
+Name: Write Char
+Opcode: 5, 0x05
+Operands:
+    Operand 1: Destination where data is written from
+        Type: Register, memory or immediate data
+    Operand 2: Amount of data to write
+        Type: Register, memory or immediate data
+Description: Writes a certain amount of chars specified by the second operand from the destination address specified by the first operand
+Flags Affected: None
+Possible Exceptions Raised: SEG_FAULT if program tries to write from outside of the data segment
+
+Instruction: WRB
+Name: Write Byte
+Opcode: 6, 0x06
+Operands:
+    Operand 1: Destination where data is written from
+        Type: Register, memory or immediate data
+    Operand 2: Amount of data to write
+        Type: Register, memory or immediate data
+Description: Writes a certain amount of bytes specified by the second operand from the destination address specified by the first operand
+Flags Affected: None
+Possible Exceptions Raised: SEG_FAULT if program tries to write from outside of the data segment
+
+Instruction: WRH
+Name: Write Half-Word
+Opcode: 7, 0x07
+Operands:
+    Operand 1: Destination where data is written from
+        Type: Register, memory or immediate data
+    Operand 2: Amount of data to write
+        Type: Register, memory or immediate data
+Description: Writes a certain amount of half-words specified by the second operand from the destination address specified by the first operand
+Flags Affected: None
+Possible Exceptions Raised: SEG_FAULT if program tries to write from outside of the data segment
+
+Instruction: WRW
+Name: Write Word
+Opcode: 8, 0x08
+Operands:
+    Operand 1: Destination where data is written from
+        Type: Register, memory or immediate data
+    Operand 2: Amount of data to write
+        Type: Register, memory or immediate data
+Description: Writes a certain amount of words specified by the second operand from the destination address specified by the first operand
+Flags Affected: None
+Possible Exceptions Raised: SEG_FAULT if program tries to write from outside of the data segment
+
+Instruction: PUSH
+Name: Push
+Opcode: 9, 0x09
+Operands:
+    Operand 1: Value to be pushed onto the stack
+        Type: Register, memory or immediate data
+Description: Pushes the value specified by the first operand onto the stack
+Flags Affected: None
+Possible Exceptions Raised: STACK_FAULT if the stack is already full
+
+Instruction: POP
+Name: Pop
+Opcode: 10, 0x0A
+Operands:
+    Operand 1: The destination where the top of the stack is popped to
+        Type: Register, memory or immediate data
+Description: Pops the top value off of the stack into the destination specified by the first operand
+Possible Exceptions Raised: STACK_FAULT if the stack is empty
+
 MOV: 11, 0x0B
+Instruction: 
+
 ADD: 12, 0x0C
 SUB: 13, 0x0D
 MUL: 14, 0x0E
@@ -55,7 +170,7 @@ ROL: 52, 0x34
 RCR: 53, 0x35
 RCL: 54, 0x36
 
-Instruction Operands:
+Instruction Operand Flags:
 REG: 1
 IMMEDIATE DATA: 2
 ADDRESS: 4
