@@ -124,9 +124,28 @@ Description: Pops the top value off of the stack into the destination specified 
 Possible Exceptions Raised: STACK_FAULT if the stack is empty
 
 MOV: 11, 0x0B
-Instruction: 
+Instruction: MOV
+Name: Move
+Opcode: 11, 0x0B
+Operands:
+    Operand 1: Destination of the move
+        Type: Register or memory
+    Operand 2: Source of the move
+        Type: Register, memory or immediate data
+Description: Moves the value specified by the first operand into the second operand
+Possible Exceptions Raised: None
 
-ADD: 12, 0x0C
+Instruction: ADD
+Name: Add
+Opcode: 12, 0x0C
+Operands:
+    Operand 1: Left-hand value of the addition operation
+        Type: Register, memory or immediate value
+    Operand 2: Right-hand value of the addition operation and where the value is stored
+        Type: Register or memory
+Description: Adds two value and stores them in the destination specified by the second operand
+Possible Exceptions Raised: None
+
 SUB: 13, 0x0D
 MUL: 14, 0x0E
 DIV: 15, 0x0F
