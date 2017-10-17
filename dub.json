@@ -1,0 +1,9 @@
+{
+	"name": "virtmachine",
+	"authors": [
+		"chris"
+	],
+	"description": "Basic VM in D",
+	"copyright": "Copyright © 2017, chris",
+    "mainSourceFile": "source/main.d"
+}
