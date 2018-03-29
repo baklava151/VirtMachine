@@ -125,7 +125,7 @@ private:
      **/
     private void read(T)(int *op1, in uint op2)
     {
-        if(op1 + op2 > &data_seg[data_size] || op1 + op2 < &data_seg[0]) // Data flowing out of data_seg?
+        if(data_size != 0 && (op1 + op2 >= &data_seg[data_size - 1] || op1 + op2 < &data_seg[0])) // Data flowing out of data_seg?
         {
             exception_reg = EXC.SEG_FAULT;
         }
@@ -148,7 +148,7 @@ private:
      **/
     private void write(T)(int *op1, in uint op2)
     {
-        if(op1 + op2 > &data_seg[data_size] || op1 + op2 < &data_seg[0])
+        if(data_size != 0 && (op1 + op2 >= &data_seg[data_size - 1] || op1 + op2 < &data_seg[0]))
         {
             exception_reg = EXC.SEG_FAULT;
         }
